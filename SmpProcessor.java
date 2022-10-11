@@ -48,13 +48,20 @@ public class SmpProcessor {
         System.out.println("Opcode                :  " + this.opcode);
         System.out.println("Operand               :  " + this.operand);
     }
-
+    
     /**
-     * Execute the program
+     * Execite the program starting at 0
      */
     public void execute() {
+      execute(0);
+    }
+
+    /**
+     * Execute the program with start address
+     */
+    public void execute(int start) {
         // For each instruction
-        for (pc = 0; pc < this.memory.getSize() - 1; pc++) {
+        for (pc = start; pc < this.memory.getSize() - 1; pc++) {
             // Dump the memory
             this.memory.dump();
             // Fetch the instruction

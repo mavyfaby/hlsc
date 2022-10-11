@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.List;
 import java.io.File;
 
 /**
@@ -11,6 +12,8 @@ import java.io.File;
 public class SmpSimpletron {
     // The processor
     private SmpProcessor processor;
+    // Start exeuction address
+    private int startAddress = 0;
 
     /**
      * Initialize the simpletron
@@ -29,6 +32,12 @@ public class SmpSimpletron {
             // Get the instruction
             String data = sc.nextLine().trim();
 
+            // Automatically set startAddress based on the variable count
+            // If data has 4 characters
+            if (data.length() == 4 && startAddress == 0) {
+                startAddress = i;
+            }
+
             // Store the instruction to the memory
             // if the length is greater than 0
             if (data.length() > 0) {
@@ -41,11 +50,27 @@ public class SmpSimpletron {
         this.processor.dump();
     }
 
+    public SmpSimpletron(List<String> program) {
+        this.processor = new SmpProcessor();
+
+        for (int i = 0; i < program.size(); i++) {
+          this.processor.store(program.get(i), i);
+        }
+
+        this.processor.dump();
+    }
+
     /**
      * Execute the program
      */
     public void execute() {
-        this.processor.execute();
+        this.processor.execute(startAddress);
+    }
+    /**
+     * Execute the program with starting address
+     */
+    public void execute(int start) {
+      this.processor.execute(start);
     }
 
     /**
@@ -56,7 +81,7 @@ public class SmpSimpletron {
     }
 
     public static void main(String[] args) throws Exception {
-        SmpSimpletron simpletron = new SmpSimpletron("simple.sml");
+        SmpSimpletron simpletron = new SmpSimpletron("main.sml");
         simpletron.execute();
     }
 }
