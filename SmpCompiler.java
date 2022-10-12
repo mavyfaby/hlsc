@@ -47,10 +47,12 @@ public class SmpCompiler {
     private final List<String> program = new ArrayList<String>();
     // List of operands
     private final List<Integer> operands = new ArrayList<Integer>();
-    // Default output name
-    private final String defaultOutput = "main.sml";
+    // Input extension name
+    private final String INPUT_FILE_EXT = "smp";
+    // Output extension name
+    private final String OUTPUT_FILE_EXT = "sml";
     // Initialize input file name
-    private String inputFilename = "standalone";
+    private String inputFilename = "";
     // Excluded lines count
     private int excludedLines = 0;
     // Compilation time
@@ -68,7 +70,12 @@ public class SmpCompiler {
 
         // Check if the file doesn't exist
         if (!file.exists()) {
-            throw new FileNotFoundException("File not found: " + filename);
+            error("file not found " + filename);
+        }
+
+        // Check input filename
+        if (!isSmpFile(filename)) {
+            error("must be a ." + INPUT_FILE_EXT + " file.");
         }
 
         // Otherwise, read the file
@@ -93,25 +100,6 @@ public class SmpCompiler {
         inputFilename = filename;
         // Close the scanner
         sc.close();
-    }
-
-    /**
-     * Accepts directly a high-level simpletron program
-     * 
-     * @param program
-     */
-    public SmpCompiler(List<String> program) {
-        // Loop through the program
-        for (String line : program) {
-            // Add instruction to program if line is not empty
-            if (line.length() > 0) {
-                program.add(line);
-                continue;
-            }
-
-            // Increment excluded lines if line is empty
-            excludedLines++;
-        }
     }
 
     /**
@@ -153,7 +141,7 @@ public class SmpCompiler {
                 for (SmpVariable v : variables) {
                     // Check if variable name already exist
                     if (v.name.equals(vName)) {
-                        error("Variable '" + vName + "' already exist " + getFilenameWithLine(i));
+                        error("variable '" + vName + "' already exist " + getFilenameWithLine(i));
                     }
                 }
 
@@ -194,18 +182,19 @@ public class SmpCompiler {
 
                 // Variable not found
                 if (tokens[1].equals(OPERAND)) {
-                    error("Variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
+                    error("variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
                 }
 
                 // Add opcode to output
                 output.add(OPCODE);
                 // Add operand to operands (to be incremented based on how many lines does the output sml have)
                 operands.add(Integer.parseInt(OPERAND));
+                // Proceed to next line
                 continue;
             }
 
             // Otherwise, throw error
-            error("Unknown command '" + command + "' in " + getFilenameWithLine(i));
+            error("unknown command '" + command + "' in " + getFilenameWithLine(i));
         }
 
         // If last instructions doesn't have a HALT
@@ -280,23 +269,20 @@ public class SmpCompiler {
      */
     private String getOutputFilename() {
         // Set default output name
-        String name = defaultOutput;
+        String name = "";
         // Split file name by period
         String[] tokens = inputFilename.split("\\.");
 
         // If tokens length greater than 1
         if (tokens.length > 1) {
-            // Set output name to empty
-            name = "";
-
             // For every tokens
             for (int i = 0; i < tokens.length - 1; i++) {
                 // Add its chunk name
                 name += tokens[i];
             }
 
-            // Add .sml extension
-            name += ".sml";
+            // Add output extension
+            name += "." + OUTPUT_FILE_EXT;
         }
 
         // return name
@@ -304,13 +290,13 @@ public class SmpCompiler {
     }
 
     /**
-     * Generate a compilation error message and exit the program
+     * Check whether the input file name have .smp extension
      * 
-     * @param message The message
+     * @param filename
+     * @return
      */
-    private void error(String message) {
-        System.out.println("Compilation error: " + message);
-        System.exit(1);
+    private boolean isSmpFile(String filename) {
+        return filename != null && filename.trim().endsWith("." + INPUT_FILE_EXT);
     }
 
     /**
@@ -333,11 +319,11 @@ public class SmpCompiler {
         // Get file size
         final long SIZE = new File(getOutputFilename()).length();
         // Print info
-        System.out.println("------------------------------------------");
+        line();
         System.out.println("Compiled to      : " + getOutputFilename() + " (" + SIZE + " bytes)");
         System.out.println("Compilation time : " + compilationTime + " ms");
         System.out.println("Number of lines  : " + output.size());
-        System.out.println("------------------------------------------");
+        line();
         
         // If showOutput
         if (showOutput) {
@@ -347,7 +333,7 @@ public class SmpCompiler {
                 System.out.println(line);
             }
     
-            System.out.println("------------------------------------------");
+            line();
         }
     }
 
@@ -373,8 +359,43 @@ public class SmpCompiler {
         return commands;
     }
 
+    /**
+     * Print a line
+     */
+    private static void line() {
+        System.out.println("------------------------------------------");
+    }
+
+    /**
+     * Generate a compilation error message and exit the program
+     * 
+     * @param message The message
+     */
+    private static void error(String message) {
+        line();
+        System.err.println("Error: " + message);
+        line();
+
+        System.exit(1);
+    }
+
+    /**
+     * Main program
+     * 
+     * @param args Name of the input
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
-        SmpCompiler compiler = new SmpCompiler("main.smp");
-        compiler.compile();
+        // Check if args have values
+        if (args.length > 0) {
+            // Intantiate the high-level simpletron compiler with the first value
+            // which is assuming an input high-level simpletron instructions
+            SmpCompiler compiler = new SmpCompiler(args[0]);
+            compiler.compile();
+            return;
+        }
+
+        // Otherwise, show no input specified
+        SmpCompiler.error("no input file specified.");
     }
 }
