@@ -48,7 +48,7 @@ will be compiled to:
 4300
 ```
 
-Note: `HALT (43)` is added at the end of the program if not explicity added in the high-level instructions.
+Note: `HALT (43)` is added at the end of the program if not explicitly added in the high-level instructions.
 
 ## List of instructions 
 

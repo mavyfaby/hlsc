@@ -26,7 +26,7 @@ public class SmpSimpletron {
 
         // Instruction counter
         int i = 0;
-        
+
         // For each instruction in the file
         while (sc.hasNextLine()) {
             // Get the instruction
@@ -45,7 +45,7 @@ public class SmpSimpletron {
                 this.processor.store(data, i++);
             }
         }
-        
+
         // Dump the processor
         this.processor.dump();
     }
@@ -54,7 +54,7 @@ public class SmpSimpletron {
         this.processor = new SmpProcessor();
 
         for (int i = 0; i < program.size(); i++) {
-          this.processor.store(program.get(i), i);
+            this.processor.store(program.get(i), i);
         }
 
         this.processor.dump();
@@ -66,11 +66,12 @@ public class SmpSimpletron {
     public void execute() {
         this.processor.execute(startAddress);
     }
+
     /**
      * Execute the program with starting address
      */
     public void execute(int start) {
-      this.processor.execute(start);
+        this.processor.execute(start);
     }
 
     /**

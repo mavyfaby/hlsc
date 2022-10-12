@@ -13,6 +13,7 @@ public class SmpMemory {
 
     /**
      * Set memory size with the specified size
+     * 
      * @param size
      */
     public SmpMemory(int size) {
@@ -44,6 +45,7 @@ public class SmpMemory {
 
     /**
      * Check if the specified address is valid
+     * 
      * @return boolean
      */
     public boolean isAddressValid(int address) {
@@ -52,6 +54,7 @@ public class SmpMemory {
 
     /**
      * Set memory item with the specified data and address
+     * 
      * @return int
      */
     public boolean setItem(String item, int address) {
@@ -67,6 +70,7 @@ public class SmpMemory {
 
     /**
      * Get memory item with the specified address
+     * 
      * @return String
      */
     public String getItem(int address) {
@@ -81,6 +85,7 @@ public class SmpMemory {
 
     /**
      * Get memory size
+     * 
      * @return int
      */
     public int getSize() {

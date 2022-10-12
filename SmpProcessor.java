@@ -20,7 +20,7 @@ public class SmpProcessor {
     private int operand;
     // Accumulator
     private String accumulator;
-    
+
     /**
      * Initialize memory with the default size
      */
@@ -30,7 +30,8 @@ public class SmpProcessor {
 
     /**
      * Store the data with the specified address to the memory
-     * @param data The data to store
+     * 
+     * @param data    The data to store
      * @param address The address to store
      */
     public void store(String data, int address) {
@@ -48,12 +49,12 @@ public class SmpProcessor {
         System.out.println("Opcode                :  " + this.opcode);
         System.out.println("Operand               :  " + this.operand);
     }
-    
+
     /**
      * Execite the program starting at 0
      */
     public void execute() {
-      execute(0);
+        execute(0);
     }
 
     /**
@@ -70,7 +71,7 @@ public class SmpProcessor {
             dump();
             // Decode the instruction
             decode();
-        } 
+        }
     }
 
     /**
@@ -96,6 +97,7 @@ public class SmpProcessor {
 
     /**
      * Fetch the instruction from the memory
+     * 
      * @param address
      */
     public void fetch(int address) {
@@ -187,7 +189,7 @@ public class SmpProcessor {
                     // Set the program counter to the operand
                     this.pc = this.operand - 1;
                 }
-                
+
                 break;
 
             // BRANCHZERO
