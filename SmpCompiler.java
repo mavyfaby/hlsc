@@ -186,6 +186,8 @@ public class SmpCompiler {
                     if (v.name != null && v.name.equals(OPERAND)) {
                         // Set vName to the address of that variable
                         OPERAND = String.valueOf(v.address < 10 ? "0" + v.address : v.address);
+                        // Break loop
+                        break;
                     }
                 }
 
@@ -284,20 +286,14 @@ public class SmpCompiler {
      */
     private String getOutputFilename() {
         // Set default output name
-        String name = "";
-        // Split file name by period
-        String[] tokens = inputFilename.split("\\.");
+        String name = inputFilename;
+        // Get period last index
+        int index = inputFilename.lastIndexOf(".");
 
-        // If tokens length greater than 1
-        if (tokens.length > 1) {
-            // For every tokens
-            for (int i = 0; i < tokens.length - 1; i++) {
-                // Add its chunk name
-                name += tokens[i];
-            }
-
-            // Add output extension
-            name += "." + OUTPUT_FILE_EXT;
+        // If found
+        if (index > 0) {
+            // Get filename without extension
+            name = name.substring(0, index) + "." + OUTPUT_FILE_EXT;
         }
 
         // return name
