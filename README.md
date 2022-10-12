@@ -14,6 +14,7 @@ A high-level simpletron instructions compiler written in Java.
 
 - [x] Compile high-level simpletron into low-level instructions.
 - [x] Include only used variables to improve memory efficiency.
+- [x] Show error if variable declared but doesn't have a value. 
 - [x] Detect whether the variable already exists.
 - [x] Detect whether the variable is already declared.
 - [x] Detect whether the instruction is valid.
@@ -63,7 +64,9 @@ for every line in the program or file:
     disregard line with '>' and empty lines
 
     if the current line is a variable declaration
-        get the name and value of the variable
+        get the variable name
+
+        if the variable is declared but doesn't have a value, show error
 
         if the variable has already been declared, show error
         else add the variable to the variables list with the initial address

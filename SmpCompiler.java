@@ -32,11 +32,12 @@ class SmpVariable {
  * 
  * 1. Compile high-level simpletron instruction into low-level
  * 2. Include only used variables to improve memory efficiency.
- * 3. Detect whether the variable already exist.
- * 4. Detect whether the variable doesn't exist.
- * 5. Detect whether the command is valid or not.
- * 6. Single line comment with ">"
- * 7. Append HALT instruction at the end of the program if not explicitly added.
+ * 3. Show error if variable declared but doesn't have a value.
+ * 4. Detect whether the variable already exist.
+ * 5. Detect whether the variable doesn't exist.
+ * 6. Detect whether the command is valid or not.
+ * 7. Single line comment with ">"
+ * 8. Append HALT instruction at the end of the program if not explicitly added.
  * ------------------------------------
  */
 public class SmpCompiler {
@@ -131,6 +132,13 @@ public class SmpCompiler {
                 String[] tokens = line.split("=");
                 // Get variable name
                 String vName = tokens[0];
+
+                // Check if tokens has only 1 value
+                if (tokens.length == 1) {
+                    // Show error
+                    error("variable '" + vName + "' doesn't have a value " + getFilenameWithLine(initialAddress));
+                }
+
                 // Get variable value
                 String vValue = tokens[1];
 
