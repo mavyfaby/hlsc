@@ -39,13 +39,13 @@ WRITE A
 will be compiled to:
 
 ```sml
+2005
+3006
+2105
+1105
+4300
 30
 40
-2000
-3001
-2100
-1100
-4300
 ```
 
 Note: `HALT (43)` is added at the end of the program if not explicitly added in the high-level instructions.
