@@ -217,9 +217,13 @@ public class SmpCompiler {
             output.set(i, output.get(i) + (NEW_ADDRESS < 10 ? "0" + NEW_ADDRESS : NEW_ADDRESS));
         }
 
-        // Add variables at the end of the program
+        // For every variables in the program
         for (SmpVariable v : variables) {
-            output.add(v.value);
+            // If the variable is in the operands
+            if (operands.contains(v.address)) {
+                // Then add the variable to the output
+                output.add(v.value);
+            }
         }
 
         // Calculate compilation time
