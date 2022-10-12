@@ -49,6 +49,8 @@ public class SmpCompiler {
     private final String defaultOutput = "main.sml";
     // Initialize input file name
     private String inputFilename = "standalone";
+    // Excluded lines count
+    private int excludedLines = 0;
     // Compilation time
     private long compilationTime = 0;
 
@@ -74,11 +76,15 @@ public class SmpCompiler {
         while (sc.hasNextLine()) {
             // Get line
             String line = sc.nextLine().trim();
-
+            
             // Add instruction to program if line is not empty
             if (line.length() > 0) {
                 program.add(line);
+                continue;
             }
+
+            // Increment excluded lines if line is empty
+            excludedLines++;
         }
 
         // Set input file namme
@@ -98,7 +104,11 @@ public class SmpCompiler {
             // Add instruction to program if line is not empty
             if (line.length() > 0) {
                 program.add(line);
+                continue;
             }
+
+            // Increment excluded lines if line is empty
+            excludedLines++;
         }
     }
 
@@ -141,7 +151,7 @@ public class SmpCompiler {
                 for (SmpVariable v : variables) {
                     // Check if variable name already exist
                     if (v.name.equals(vName)) {
-                        error("Variable '" + vName + "' already exist (" + inputFilename + ":" + (i + 1) + ")");
+                        error("Variable '" + vName + "' already exist " + getFilenameWithLine(i));
                     }
                 }
 
@@ -185,7 +195,7 @@ public class SmpCompiler {
 
                 // Variable not found
                 if (tokens[1].equals(OPERAND)) {
-                    error("Variable '" + OPERAND + "' not found in (" + inputFilename + ":" + (i + 1) + ")");
+                    error("Variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
                 }
 
                 // Add opcode and operand to output
@@ -194,7 +204,7 @@ public class SmpCompiler {
             }
 
             // Otherwise, throw error
-            error("Unknown command '" + command + "' in (" + inputFilename + ":" + (i + 1) + ")");
+            error("Unknown command '" + command + "' in " + getFilenameWithLine(i));
         }
 
         // If last instructions doesn't have a HALT
@@ -284,6 +294,16 @@ public class SmpCompiler {
     private void error(String message) {
         System.out.println("Compilation error: " + message);
         System.exit(1);
+    }
+
+    /**
+     * Get filename with line number based on the program execution index
+     * 
+     * @param i
+     * @return filename with line
+     */
+    private String getFilenameWithLine(int i) {
+        return "(" + inputFilename + ":" + ((i + 1) + excludedLines) + ")";
     }
 
     /**
