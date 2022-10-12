@@ -51,18 +51,11 @@ public class SmpProcessor {
     }
 
     /**
-     * Execite the program starting at 0
-     */
-    public void execute() {
-        execute(0);
-    }
-
-    /**
      * Execute the program with start address
      */
-    public void execute(int start) {
+    public void execute() {
         // For each instruction
-        for (pc = start; pc < this.memory.getSize() - 1; pc++) {
+        for (pc = 0; pc < this.memory.getSize() - 1; pc++) {
             // Dump the memory
             this.memory.dump();
             // Fetch the instruction
@@ -117,6 +110,12 @@ public class SmpProcessor {
     public void decode() {
         String data = "";
         int result = 0;
+
+        // If no opcode
+        if (opcode == null) {
+            // Don't proceed to decoding
+            return;
+        }
 
         // Check the opcode
         switch (opcode) {

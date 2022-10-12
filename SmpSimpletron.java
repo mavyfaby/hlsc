@@ -12,8 +12,6 @@ import java.io.File;
 public class SmpSimpletron {
     // The processor
     private SmpProcessor processor;
-    // Start exeuction address
-    private int startAddress = 0;
 
     /**
      * Initialize the simpletron
@@ -31,12 +29,6 @@ public class SmpSimpletron {
         while (sc.hasNextLine()) {
             // Get the instruction
             String data = sc.nextLine().trim();
-
-            // Automatically set startAddress based on the variable count
-            // If data has 4 characters
-            if (data.length() == 4 && startAddress == 0) {
-                startAddress = i;
-            }
 
             // Store the instruction to the memory
             // if the length is greater than 0
@@ -64,14 +56,7 @@ public class SmpSimpletron {
      * Execute the program
      */
     public void execute() {
-        this.processor.execute(startAddress);
-    }
-
-    /**
-     * Execute the program with starting address
-     */
-    public void execute(int start) {
-        this.processor.execute(start);
+        this.processor.execute();
     }
 
     /**

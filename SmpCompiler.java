@@ -45,6 +45,8 @@ public class SmpCompiler {
     private final List<SmpVariable> variables = new ArrayList<SmpVariable>();
     // Initialize the program storage
     private final List<String> program = new ArrayList<String>();
+    // List of operands
+    private final List<Integer> operands = new ArrayList<Integer>();
     // Default output name
     private final String defaultOutput = "main.sml";
     // Initialize input file name
@@ -157,9 +159,6 @@ public class SmpCompiler {
 
                 // If not exist, then store it in the variables list
                 variables.add(new SmpVariable(i, vName, vValue));
-
-                // Add the variable value to output
-                output.add(vValue);
                 continue;
             }
 
@@ -172,7 +171,7 @@ public class SmpCompiler {
             // Check if the command exist
             if (commands.containsKey(command)) {
                 // Get opcode
-                final int OPCODE = commands.get(command);
+                final String OPCODE = commands.get(command).toString();
 
                 // If command is HALT
                 if (command.equals("HALT")) {
@@ -198,8 +197,10 @@ public class SmpCompiler {
                     error("Variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
                 }
 
-                // Add opcode and operand to output
-                output.add(OPCODE + OPERAND);
+                // Add opcode to output
+                output.add(OPCODE);
+                // Add operand to operands (to be incremented based on how many lines does the output sml have)
+                operands.add(Integer.parseInt(OPERAND));
                 continue;
             }
 
@@ -214,13 +215,29 @@ public class SmpCompiler {
             output.add(commands.get("HALT") + "00");
         }
 
+        // Get total line number of the output sml program
+        final int LINES = output.size();
+
+        // Loop every operands
+        for (int i = 0; i < operands.size(); i++) {
+            // Get new address of the operands (variables) based on how many lines the output program have
+            final int NEW_ADDRESS = operands.get(i) + LINES;
+            // And append it to the opcode
+            output.set(i, output.get(i) + (NEW_ADDRESS < 10 ? "0" + NEW_ADDRESS : NEW_ADDRESS));
+        }
+
+        // Add variables at the end of the program
+        for (SmpVariable v : variables) {
+            output.add(v.value);
+        }
+
         // Calculate compilation time
         compilationTime = System.currentTimeMillis() - compilationTime;
 
         // Output file
         if (generateOutput(output)) {
             // Print output statistics
-            printOutputStats(output);
+            printOutputStats(output, true);
         }
     }
 
@@ -310,8 +327,9 @@ public class SmpCompiler {
      * Print compilation output statistics
      * 
      * @param output
+     * @param showOutput
      */
-    private void printOutputStats(List<String> output) {
+    private void printOutputStats(List<String> output, boolean showOutput) {
         // Get file size
         final long SIZE = new File(getOutputFilename()).length();
         // Print info
@@ -320,6 +338,17 @@ public class SmpCompiler {
         System.out.println("Compilation time : " + compilationTime + " ms");
         System.out.println("Number of lines  : " + output.size());
         System.out.println("------------------------------------------");
+        
+        // If showOutput
+        if (showOutput) {
+            // For every line in the output
+            for (String line : output) {
+                // Print current line
+                System.out.println(line);
+            }
+    
+            System.out.println("------------------------------------------");
+        }
     }
 
     /**
