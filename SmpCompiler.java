@@ -78,22 +78,16 @@ public class SmpCompiler {
             error("must be a ." + INPUT_FILE_EXT + " file.");
         }
 
+        // Reset simpletron properties
+        reset();
+
         // Otherwise, read the file
         Scanner sc = new Scanner(file);
 
         // Read the file line by line
         while (sc.hasNextLine()) {
-            // Get line
-            String line = sc.nextLine().trim();
-            
-            // Add instruction to program if line is not empty
-            if (line.length() > 0) {
-                program.add(line);
-                continue;
-            }
-
-            // Increment excluded lines if line is empty
-            excludedLines++;
+            // Get line, trim, and add instruction to program if
+            program.add(sc.nextLine().trim());
         }
 
         // Set input file namme
@@ -114,13 +108,16 @@ public class SmpCompiler {
         List<String> output = new ArrayList<String>();
 
         // Loop through the program
-        for (int i = 0; i < program.size(); i++) {
+        for (int i = 0, initialAddress = 0; i < program.size(); i++) {
             // Remove trailing and leading whitespace
             String line = program.get(i).trim();
 
             // Check if the line is a comment, or
             // Check if the line is empty
             if (line.startsWith(">") || line.isEmpty()) {
+                // Increment excluded lines if line is a comment or an empty
+                excludedLines++;
+                // Proceed to next line
                 continue;
             }
 
@@ -141,12 +138,15 @@ public class SmpCompiler {
                 for (SmpVariable v : variables) {
                     // Check if variable name already exist
                     if (v.name.equals(vName)) {
-                        error("variable '" + vName + "' already exist " + getFilenameWithLine(i));
+                        error("variable '" + vName + "' already exist " + getFilenameWithLine(initialAddress));
                     }
                 }
 
                 // If not exist, then store it in the variables list
                 variables.add(new SmpVariable(i, vName, vValue));
+                // Increment initial address
+                initialAddress++;
+                // Proceed to next line
                 continue;
             }
 
@@ -182,19 +182,21 @@ public class SmpCompiler {
 
                 // Variable not found
                 if (tokens[1].equals(OPERAND)) {
-                    error("variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
+                    error("variable '" + OPERAND + "' not found in " + getFilenameWithLine(initialAddress));
                 }
 
                 // Add opcode to output
                 output.add(OPCODE);
                 // Add operand to operands (to be incremented based on how many lines does the output sml have)
                 operands.add(Integer.parseInt(OPERAND));
+                // Increment initial address
+                initialAddress++;
                 // Proceed to next line
                 continue;
             }
 
             // Otherwise, throw error
-            error("unknown command '" + command + "' in " + getFilenameWithLine(i));
+            error("unknown command '" + command + "' in " + getFilenameWithLine(initialAddress));
         }
 
         // If last instructions doesn't have a HALT
@@ -302,11 +304,11 @@ public class SmpCompiler {
     /**
      * Get filename with line number based on the program execution index
      * 
-     * @param i
+     * @param address
      * @return filename with line
      */
-    private String getFilenameWithLine(int i) {
-        return "(" + inputFilename + ":" + ((i + 1) + excludedLines) + ")";
+    private String getFilenameWithLine(int address) {
+        return "(" + inputFilename + ":" + ((address + 1) + excludedLines) + ")";
     }
 
     /**
@@ -357,6 +359,20 @@ public class SmpCompiler {
         commands.put("HALT", 43);
 
         return commands;
+    }
+
+    /**
+     * Reset simpletron properties
+     */
+    private void reset() {
+        // Reset list
+        variables.clear();
+        program.clear();
+        operands.clear();
+        // Reset properties
+        inputFilename = "";
+        excludedLines = 0;
+        compilationTime = 0;
     }
 
     /**
