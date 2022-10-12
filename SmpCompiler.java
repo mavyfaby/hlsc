@@ -31,11 +31,12 @@ class SmpVariable {
  * ------------ Features: -------------
  * 
  * 1. Compile high-level simpletron instruction into low-level
- * 2. Detect whether the variable already exist.
- * 3. Detect whether the variable doesn't exist.
- * 4. Detect whether the command is valid or not.
- * 5. Single line comment with ">"
- * 6. Append HALT instruction at the end of the program if not explicitly added.
+ * 2. Include only used variables to improve memory efficiency.
+ * 3. Detect whether the variable already exist.
+ * 4. Detect whether the variable doesn't exist.
+ * 5. Detect whether the command is valid or not.
+ * 6. Single line comment with ">"
+ * 7. Append HALT instruction at the end of the program if not explicitly added.
  * ------------------------------------
  */
 public class SmpCompiler {

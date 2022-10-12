@@ -13,6 +13,7 @@ A high-level simpletron instructions compiler written in Java.
 ## Features
 
 - [x] Compile high-level simpletron into low-level instructions.
+- [x] Include only used variables to improve memory efficiency.
 - [x] Detect whether the variable already exists.
 - [x] Detect whether the variable is already declared.
 - [x] Detect whether the instruction is valid.
@@ -26,8 +27,10 @@ A high-level simpletron instructions compiler written in Java.
 ## Example
 
 ```smp
-A = 30
-B = 40
+A = 25
+B = 50
+C = 75
+D = 100
 
 > This is a comment
 
@@ -44,8 +47,8 @@ will be compiled to:
 2105
 1105
 4300
-30
-40
+25
+50
 ```
 
 Note: `HALT (43)` is added at the end of the program if not explicitly added in the high-level instructions.
