@@ -30,14 +30,15 @@ class SmpVariable {
  * 
  * ------------ Features: -------------
  * 
- * 1. Compile high-level simpletron instruction into low-level
- * 2. Include only used variables to improve memory efficiency.
- * 3. Show error if variable declared but doesn't have a value.
- * 4. Detect whether the variable already exist.
- * 5. Detect whether the variable doesn't exist.
- * 6. Detect whether the command is valid or not.
- * 7. Single line comment with ">"
- * 8. Append HALT instruction at the end of the program if not explicitly added.
+ * 1. Compile high-level simpletron instruction into low-level.
+ * 2. Declare variables anywhere.
+ * 3. Include only used variables to improve memory efficiency.
+ * 4. Show error if variable declared but doesn't have a value.
+ * 5. Detect whether the variable already exist.
+ * 6. Detect whether the variable doesn't exist.
+ * 7. Detect whether the command is valid or not.
+ * 8. Single line comment with ">"
+ * 9. Append HALT instruction at the end of the program if not explicitly added.
  * ------------------------------------
  */
 public class SmpCompiler {
@@ -56,7 +57,7 @@ public class SmpCompiler {
     // Initialize input file name
     private String inputFilename = "";
     // Excluded lines count
-    private int excludedLines = 0;
+    private int excludedCount = 0;
     // Compilation time
     private long compilationTime = 0;
 
@@ -88,20 +89,8 @@ public class SmpCompiler {
 
         // Read the file line by line
         while (sc.hasNextLine()) {
-            // Get line
-            String line = sc.nextLine().trim();
-
-            // Check if the line is a comment, or
-            // Check if the line is empty
-            if (line.startsWith(">") || line.isEmpty()) {
-                // Increment excluded lines if line is a comment or an empty
-                excludedLines++;
-                // Proceed to next line
-                continue;
-            }
-
-            // Otherwise, add to program
-            program.add(line);
+            // Get line, trim, and add to program
+            program.add(sc.nextLine().trim());
         }
 
         // Set input file namme
@@ -125,6 +114,15 @@ public class SmpCompiler {
         for (int i = 0, initialAddress = 0; i < program.size(); i++) {
             // Remove trailing and leading whitespace
             String line = program.get(i).trim();
+
+            // Check if the line is a comment, or
+            // Check if the line is empty
+            if (line.startsWith(">") || line.isEmpty()) {
+                // Increment excluded lines if line is a comment or an empty
+                excludedCount++;
+                // Proceed to next line
+                continue;
+            }
 
             // Check if the line is a variable declaration
             if (line.indexOf("=") != -1) {
@@ -218,6 +216,9 @@ public class SmpCompiler {
             output.add(commands.get("HALT") + "00");
         }
 
+        // Added variables in the output
+        List<Integer> addedVariables = new ArrayList<Integer>();
+
         // For every variables in the program
         for (SmpVariable v : variables) {
             // Loop every operands
@@ -225,12 +226,14 @@ public class SmpCompiler {
                 // If the current operand is same as the current variable address
                 if (operands.get(i) == v.address) {
                     // If the variable isn't in the output yet
-                    if (!output.contains(v.value)) {
+                    if (!addedVariables.contains(v.address)) {
                         // Then add the variable to the output
                         output.add(v.value);
+                        // Added variables
+                        addedVariables.add(v.address);
                     }
 
-                    // New address
+                    // // New address
                     int newAddress = output.size() - 1;
                     // Set new address
                     operands.set(i, newAddress);
@@ -326,7 +329,7 @@ public class SmpCompiler {
      * @return filename with line
      */
     private String getFilenameWithLine(int address) {
-        return "(" + inputFilename + ":" + ((address + 1) + excludedLines) + ")";
+        return "(" + inputFilename + ":" + ((address + 1) + excludedCount) + ")";
     }
 
     /**
@@ -389,7 +392,7 @@ public class SmpCompiler {
         operands.clear();
         // Reset properties
         inputFilename = "";
-        excludedLines = 0;
+        excludedCount = 0;
         compilationTime = 0;
     }
 

@@ -13,6 +13,7 @@ A high-level simpletron instructions compiler written in Java.
 ## Features
 
 - [x] Compile high-level simpletron into low-level instructions.
+- [x] Declare variables anywhere.
 - [x] Include only used variables to improve memory efficiency.
 - [x] Show error if variable declared but doesn't have a value. 
 - [x] Detect whether the variable already exists.
@@ -36,20 +37,27 @@ D = 100
 > This is a comment
 
 LOAD A
+
+E = 25
+F = 125
+
 ADD B
 STORE A
 WRITE A
+WRITE E
 ```
 will be compiled to:
 
 ```sml
-2005
-3006
-2105
-1105
+2006
+3007
+2106
+1106
+1108
 4300
 25
 50
+25
 ```
 
 Note: `HALT (43)` is added at the end of the program if not explicitly added in the high-level instructions.
