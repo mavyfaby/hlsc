@@ -61,8 +61,8 @@ My pseudocode for compiling `high-level` simpletron instructions into `low-level
 
 ```py
 for every line in the program or file:
-    disregard line with '>' and empty lines
-
+    get current line 
+    
     if the current line is a variable declaration
         get the variable name
 
@@ -77,7 +77,7 @@ for every line in the program or file:
         if the command is valid, then get its corresponding opcode
 
         if the opcode is HALT, then add it to the output and exit the program loop
-        else get the initial address of the operand (variable) 
+        else get the initial address of the operand (variable) and assign it to the operand
 
         if variable doesn't exist, show error
         else put opcode to the `outputs` and put operand (initial address) to the `operands`
@@ -86,13 +86,15 @@ for every line in the program or file:
 
     if no HALT at the end of the program, then manually add it
 
-    get output number of lines excluding the variable declarations
-        
-    for every operands (initial address):
-        add the initial address to number of lines to get the final address of the variable
-        set the final address to the output appended to the opcode
+    for every variables:
+        for every operands (initial address):
+            if the variable's address is equal to the operand
+                if the variable's value is not yet added to the output, then add it to the output
 
-    append all variable's value to the output
+                get the variable's new address and assign it to the operand
+        
+    for every operands (final address):
+        set the final address to the output appended to the opcode
 ```
 
 ## List of instructions 
