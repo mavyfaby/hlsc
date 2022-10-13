@@ -70,6 +70,7 @@ My pseudocode for compiling `high-level` simpletron instructions into `low-level
 ```py
 for every line in the program or file:
     get current line 
+    disregard line with '>' and empty lines
     
     if the current line is a variable declaration
         get the variable name
@@ -97,7 +98,7 @@ for every line in the program or file:
     for every variables:
         for every operands (initial address):
             if the variable's address is equal to the operand
-                if the variable's value is not yet added to the output, then add it to the output
+                if the variable is not yet added to the output, then add it to the output
 
                 get the variable's new address and assign it to the operand
         
