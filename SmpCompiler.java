@@ -88,8 +88,20 @@ public class SmpCompiler {
 
         // Read the file line by line
         while (sc.hasNextLine()) {
-            // Get line, trim, and add instruction to program if
-            program.add(sc.nextLine().trim());
+            // Get line
+            String line = sc.nextLine().trim();
+
+            // Check if the line is a comment, or
+            // Check if the line is empty
+            if (line.startsWith(">") || line.isEmpty()) {
+                // Increment excluded lines if line is a comment or an empty
+                excludedLines++;
+                // Proceed to next line
+                continue;
+            }
+
+            // Otherwise, add to program
+            program.add(line);
         }
 
         // Set input file namme
@@ -113,15 +125,6 @@ public class SmpCompiler {
         for (int i = 0, initialAddress = 0; i < program.size(); i++) {
             // Remove trailing and leading whitespace
             String line = program.get(i).trim();
-
-            // Check if the line is a comment, or
-            // Check if the line is empty
-            if (line.startsWith(">") || line.isEmpty()) {
-                // Increment excluded lines if line is a comment or an empty
-                excludedLines++;
-                // Proceed to next line
-                continue;
-            }
 
             // Check if the line is a variable declaration
             if (line.indexOf("=") != -1) {
@@ -185,9 +188,7 @@ public class SmpCompiler {
                     // If variable name is not null and is same with the current variable
                     if (v.name != null && v.name.equals(OPERAND)) {
                         // Set vName to the address of that variable
-                        OPERAND = String.valueOf(v.address < 10 ? "0" + v.address : v.address);
-                        // Break loop
-                        break;
+                        OPERAND = (v.address < 10 ? "0" + v.address : v.address).toString();
                     }
                 }
 
@@ -217,24 +218,32 @@ public class SmpCompiler {
             output.add(commands.get("HALT") + "00");
         }
 
-        // Get total line number of the output sml program
-        final int LINES = output.size();
+        // For every variables in the program
+        for (SmpVariable v : variables) {
+            // Loop every operands
+            for (int i = 0; i < operands.size(); i++) {
+                // If the current operand is same as the current variable address
+                if (operands.get(i) == v.address) {
+                    // If the variable isn't in the output yet
+                    if (!output.contains(v.value)) {
+                        // Then add the variable to the output
+                        output.add(v.value);
+                    }
+
+                    // New address
+                    int newAddress = output.size() - 1;
+                    // Set new address
+                    operands.set(i, newAddress);
+                }
+            }
+        }
 
         // Loop every operands
         for (int i = 0; i < operands.size(); i++) {
-            // Get new address of the operands (variables) based on how many lines the output program have
-            final int NEW_ADDRESS = operands.get(i) + LINES;
-            // And append it to the opcode
-            output.set(i, output.get(i) + (NEW_ADDRESS < 10 ? "0" + NEW_ADDRESS : NEW_ADDRESS));
-        }
-
-        // For every variables in the program
-        for (SmpVariable v : variables) {
-            // If the variable is in the operands
-            if (operands.contains(v.address)) {
-                // Then add the variable to the output
-                output.add(v.value);
-            }
+            // Get operand
+            int operand = operands.get(i);
+            // Set output
+            output.set(i, output.get(i) + (operand < 10 ? "0" + operand : operand));
         }
 
         // Calculate compilation time
@@ -339,9 +348,9 @@ public class SmpCompiler {
         // If showOutput
         if (showOutput) {
             // For every line in the output
-            for (String line : output) {
+            for (int i = 0; i < output.size(); i++) {
                 // Print current line
-                System.out.println(line);
+                System.out.println((i < 10 ? "0" + i : i) + " " + output.get(i));
             }
     
             line();
