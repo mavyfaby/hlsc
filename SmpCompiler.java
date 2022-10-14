@@ -30,20 +30,23 @@ class SmpVariable {
  * 
  * ------------ Features: -------------
  * 
- * 1. Compile high-level simpletron instruction into low-level.
- * 2. Declare variables anywhere.
- * 3. Include only used variables to improve memory efficiency.
- * 4. Show error if variable declared but doesn't have a value.
- * 5. Detect whether the variable already exist.
- * 6. Detect whether the variable doesn't exist.
- * 7. Detect whether the command is valid or not.
- * 8. Single line comment with ">"
- * 9. Append HALT instruction at the end of the program if not explicitly added.
+ *  1. Compile high-level simpletron instruction into low-level.
+ *  2. Dynamic branching with `@branch_name` anywhere in the program.
+ *  3. Declare variables anywhere.
+ *  4. Include only used variables to improve memory efficiency.
+ *  5. Show error if variable declared but doesn't have a value.
+ *  6. Detect whether the variable already exist.
+ *  7. Detect whether the variable doesn't exist.
+ *  8. Detect whether the command is valid or not.
+ *  9. Single line comment with ">"
+ * 10. Append HALT instruction at the end of the program if not explicitly added.
  * ------------------------------------
  */
 public class SmpCompiler {
     // Simpletron high-level commands
     private final HashMap<String, Integer> commands = createCommands();
+    // Simpletron branch storage
+    private final HashMap<String, Integer> branches = new HashMap<String, Integer>();
     // Variable storage
     private final List<SmpVariable> variables = new ArrayList<SmpVariable>();
     // Initialize the program storage
@@ -54,6 +57,8 @@ public class SmpCompiler {
     private final String INPUT_FILE_EXT = "smp";
     // Output extension name
     private final String OUTPUT_FILE_EXT = "sml";
+    // Branch keyword identifier
+    private final String BRANCH_IDENTIFIER = "@";
     // Initialize input file name
     private String inputFilename = "";
     // Excluded lines count
@@ -154,6 +159,25 @@ public class SmpCompiler {
 
                 // If not exist, then store it in the variables list
                 variables.add(new SmpVariable(i, vName, vValue));
+                // Proceed to next line
+                continue;
+            }
+
+            // If current line is a branch declaration
+            if (line.startsWith(BRANCH_IDENTIFIER)) {
+                // Remove all whitespace
+                line = line.replaceAll(" ", "");
+                // Get name
+                String name = line.substring(1, line.length());
+
+                // Check if branch name already exist
+                if (branches.containsKey(name)) {
+                    // Show error
+                    error("branch '" + BRANCH_IDENTIFIER + name + "' already exist " + getFilenameWithLine(initialAddress));
+                }
+
+                // Add branch to branches
+                branches.put(name, output.size());
                 // Increment initial address
                 initialAddress++;
                 // Proceed to next line
@@ -162,9 +186,15 @@ public class SmpCompiler {
 
             // Using other commands
             // Split the line by space
-            String[] tokens = line.split(" ");
+            String[] tokens = line.split(" ", 2);
             // Get command (e.g READ, STORE, LOAD, ...)
             String command = tokens[0];
+
+            // If tokens length is only 1
+            if (tokens.length == 1) {
+                // Incomplete command
+                error("incomplete command '" + line + "' in " + getFilenameWithLine(initialAddress));
+            }
 
             // Check if the command exist
             if (commands.containsKey(command)) {
@@ -177,9 +207,61 @@ public class SmpCompiler {
                     output.add(OPCODE + "00");
                     break;
                 }
-
+                
                 // Otherwise, get value or variable name
-                String OPERAND = tokens[1];
+                String OPERAND = tokens[1].replaceAll(" ", "");
+
+                // If command is a branch
+                if (command.contains("BRANCH")) {
+                    // Get branch name
+                    String name = OPERAND.substring(1, OPERAND.length());
+
+                    // Find branch name
+                    if (branches.containsKey(name)) {
+                        // Get address
+                        int address = branches.get(name);
+                        // Add to output
+                        output.add(OPCODE + (address < 10 ? "0" + address : address));
+                        // Add to operand
+                        operands.add(-1);
+                        // Proceed to next line
+                        continue;
+                    }
+
+                    // Flag if branch declaration is after the branch callee
+                    boolean isFound = false;
+                    
+                    // Loop through the file next to the error
+                    for (int j = i + 1, k = 0; j < program.size(); j++, k++) {
+                        // Get current line
+                        line = program.get(j);
+                        // Get branch name
+                        String bname = line.replaceAll(" ", "");
+
+                        // If branch name exist after the branch line
+                        if (bname.startsWith(BRANCH_IDENTIFIER) && bname.contains(name)) {
+                            // Adjust address
+                            int address = output.size() + k;
+                            // Add to output
+                            output.add(OPCODE + (address < 10 ? "0" + address : address));
+                            // Add to operand
+                            operands.add(-1);
+                            // Set found to true
+                            isFound = true;
+                            // Break the loop
+                            break;
+                        }
+                    }
+
+                    // If branch declaration not found
+                    if (!isFound) {
+                        // Show error
+                        error("branch name '" + BRANCH_IDENTIFIER + name + "' doesn't exist in " + getFilenameWithLine(initialAddress));
+                    }
+
+                    // Proceed to next line
+                    continue;
+                }
 
                 // Loop through the variable
                 for (SmpVariable v : variables) {
@@ -243,10 +325,18 @@ public class SmpCompiler {
 
         // Loop every operands
         for (int i = 0; i < operands.size(); i++) {
+            // Get opcode
+            String opcode = output.get(i);
             // Get operand
             int operand = operands.get(i);
+
+            // If opcode number is a branch instruction
+            if (opcode.startsWith("40") || opcode.startsWith("41") || opcode.startsWith("42")) {
+                continue;
+            }
+            
             // Set output
-            output.set(i, output.get(i) + (operand < 10 ? "0" + operand : operand));
+            output.set(i, String.valueOf(opcode) + (operand < 10 ? "0" + operand : operand));
         }
 
         // Calculate compilation time
@@ -390,6 +480,7 @@ public class SmpCompiler {
         variables.clear();
         program.clear();
         operands.clear();
+        branches.clear();
         // Reset properties
         inputFilename = "";
         excludedCount = 0;
