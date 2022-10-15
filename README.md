@@ -93,6 +93,8 @@ for every line in the program:
             continue to next line
 
     if current line is a branch:
+        if branch as no identifier name:
+            throw error
         if branch is already declared:
             throw error
         else:

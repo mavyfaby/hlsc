@@ -216,6 +216,12 @@ public class SmpCompiler {
                     // Get branch name
                     String name = OPERAND.substring(1, OPERAND.length());
 
+                    // If branch has no identifier name
+                    if (name.length() == 0) {
+                        // Show error
+                        error("branch name is missing " + getFilenameWithLine(initialAddress));
+                    }
+
                     // Find branch name
                     if (branches.containsKey(name)) {
                         // Get address
