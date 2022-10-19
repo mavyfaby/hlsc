@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
+enum Status {
+    CONTINUE, BREAK, DONE
+}
+
 /**
  * A variable class with address
  */
@@ -53,6 +57,8 @@ public class SmpCompiler {
     private final List<String> program = new ArrayList<String>();
     // List of operands
     private final List<Integer> operands = new ArrayList<Integer>();
+    // Initialize output
+    private final List<String> output = new ArrayList<String>();
     // Input extension name
     private final String INPUT_FILE_EXT = "smp";
     // Output extension name
@@ -110,8 +116,6 @@ public class SmpCompiler {
     public void compile() throws Exception {
         // Set initial compilation time
         compilationTime = System.currentTimeMillis();
-        // Initialize output
-        List<String> output = new ArrayList<String>();
 
         // Loop through the program
         for (int i = 0; i < program.size(); i++) {
@@ -127,166 +131,50 @@ public class SmpCompiler {
 
             // Check if the line is a variable declaration
             if (line.indexOf("=") != -1) {
-                // Remove all whitespaces
-                line = line.replaceAll(" ", "");
-
-                // Split line by equal (=) sign
-                String[] tokens = line.split("=");
-                // Get variable name
-                String vName = tokens[0];
-
-                // Check if tokens has only 1 value
-                if (tokens.length == 1) {
-                    // Show error
-                    error("variable '" + vName + "' doesn't have a value " + getFilenameWithLine(i));
-                }
-
-                // Get variable value
-                String vValue = tokens[1];
-
-                // Check if variable has been declared
-                // Loop through declared variables
-                for (SmpVariable v : variables) {
-                    // Check if variable name already exist
-                    if (v.name.equals(vName)) {
-                        error("variable '" + vName + "' already exist " + getFilenameWithLine(i));
-                    }
-                }
-
-                // If not exist, then store it in the variables list
-                variables.add(new SmpVariable(i, vName, vValue));
+                // Process variable declaration
+                processVariable(i, line);
                 // Proceed to next line
                 continue;
             }
 
             // If current line is a branch declaration
             if (line.startsWith(BRANCH_IDENTIFIER)) {
-                // Remove all whitespace
-                line = line.replaceAll(" ", "");
-                // Get name
-                String name = line.substring(1, line.length());
-
-                // Check if branch name already exist
-                if (branches.containsKey(name)) {
-                    // Show error
-                    error("branch '" + BRANCH_IDENTIFIER + name + "' already exist " + getFilenameWithLine(i));
-                }
-
-                // Add branch to branches
-                branches.put(name, output.size());
+                // Process branch declaration
+                processBranch(i, line);
                 // Proceed to next line
                 continue;
             }
 
             // Using other commands
             // Split the line by space
-            String[] tokens = line.split(" ", 2);
-            // Get command (e.g READ, STORE, LOAD, ...)
-            String command = tokens[0];
+            String[] commandTokens = line.split(" ", 2);
 
+            // Get command (e.g READ, STORE, LOAD, ...)
             // If tokens length is only 1 and is not HALT
-            if (tokens.length == 1 && !command.equals("HALT")) {
+            if (commandTokens.length == 1 && !commandTokens[0].equals("HALT")) {
                 // Incomplete command
                 error("incomplete command '" + line + "' in " + getFilenameWithLine(i));
             }
 
             // Check if the command exist
-            if (commands.containsKey(command)) {
-                // Get opcode
-                final String OPCODE = commands.get(command).toString();
+            if (commands.containsKey(commandTokens[0])) {
+                // Process command
+                Status status = processCommand(i, commandTokens);
 
-                // If command is HALT
-                if (command.equals("HALT")) {
-                    // Add its opcode and exit the loop
-                    output.add(OPCODE + "00");
+                // Check if the status is done
+                if (status == Status.BREAK) {
+                    // Break the loop
                     break;
-                }
-                
-                // Otherwise, get value or variable name
-                String OPERAND = tokens[1].replaceAll(" ", "");
-
-                // If command is a branch
-                if (command.contains("BRANCH")) {
-                    // Get branch name
-                    String name = OPERAND.substring(1, OPERAND.length());
-
-                    // If branch has no identifier name
-                    if (name.length() == 0) {
-                        // Show error
-                        error("branch name is missing " + getFilenameWithLine(i));
-                    }
-
-                    // Find branch name
-                    if (branches.containsKey(name)) {
-                        // Get address
-                        int addr = branches.get(name);
-                        // Add to output
-                        output.add(OPCODE + (addr < 10 ? "0" + addr : addr));
-                        // Add to operand
-                        operands.add(-1);
-                        // Proceed to next line
-                        continue;
-                    }
-
-                    // Flag if branch declaration is after the branch callee
-                    boolean isFound = false;
-                    
-                    // Loop through the file next to the error
-                    for (int j = i + 1, k = 0; j < program.size(); j++, k++) {
-                        // Get current line
-                        line = program.get(j);
-                        // Get branch name
-                        String bname = line.replaceAll(" ", "");
-
-                        // If branch name exist after the branch line
-                        if (bname.startsWith(BRANCH_IDENTIFIER) && bname.contains(name)) {
-                            // Adjust address
-                            int addr = output.size() + k;
-                            // Add to output
-                            output.add(OPCODE + (addr < 10 ? "0" + addr : addr));
-                            // Add to operand
-                            operands.add(-1);
-                            // Set found to true
-                            isFound = true;
-                            // Break the loop
-                            break;
-                        }
-                    }
-
-                    // If branch declaration not found
-                    if (!isFound) {
-                        // Show error
-                        error("branch name '" + BRANCH_IDENTIFIER + name + "' doesn't exist in " + getFilenameWithLine(i));
-                    }
-
+                } else if (status == Status.CONTINUE) {
                     // Proceed to next line
                     continue;
                 }
-
-                // Loop through the variable
-                for (SmpVariable v : variables) {
-                    // If variable name is not null and is same with the current variable
-                    if (v.name != null && v.name.equals(OPERAND)) {
-                        // Set vName to the address of that variable
-                        OPERAND = (v.address < 10 ? "0" + v.address : v.address).toString();
-                    }
-                }
-
-                // Variable not found
-                if (tokens[1].equals(OPERAND)) {
-                    error("variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
-                }
-
-                // Add opcode to output
-                output.add(OPCODE);
-                // Add operand to operands (to be incremented based on how many lines does the output sml have)
-                operands.add(Integer.parseInt(OPERAND));
                 // Proceed to next line
                 continue;
             }
 
             // Otherwise, throw error
-            error("unknown command '" + command + "' in " + getFilenameWithLine(i));
+            error("unknown command '" + commandTokens[0] + "' in " + getFilenameWithLine(i));
         }
 
         // If last instructions doesn't have a HALT
@@ -296,6 +184,25 @@ public class SmpCompiler {
             output.add(commands.get("HALT") + "00");
         }
 
+        // Process operands
+        processOperands();
+
+        // Calculate compilation time
+        compilationTime = System.currentTimeMillis() - compilationTime;
+
+        // Output file
+        if (generateOutput(output)) {
+            // Print output statistics
+            printOutputStats(output, true);
+        }
+    }
+
+    // ===================== Utility methods ===================== //
+
+    /**
+     * Post process variables and operands
+     */
+    private void processOperands() {
         // Added variables in the output
         List<Integer> addedVariables = new ArrayList<Integer>();
 
@@ -336,16 +243,180 @@ public class SmpCompiler {
             // Set output
             output.set(i, String.valueOf(opcode) + (operand < 10 ? "0" + operand : operand));
         }
-
-        // Calculate compilation time
-        compilationTime = System.currentTimeMillis() - compilationTime;
-
-        // Output file
-        if (generateOutput(output)) {
-            // Print output statistics
-            printOutputStats(output, true);
-        }
     }
+
+    /**
+     * Process command 
+     * 
+     * @param i
+     * @param commandTokens
+     * @return Status
+     */
+    private Status processCommand(int i, String[] commandTokens) {
+        // Get command
+        String command = commandTokens[0];
+        // Get operand
+        String operand = "";
+
+        // If has operand
+        if (commandTokens.length > 1) {
+            operand = commandTokens[1];
+        }
+
+        // Get opcode
+        final String OPCODE = commands.get(command).toString();
+
+        // If command is HALT
+        if (command.equals("HALT")) {
+            // Add its opcode and exit the loop
+            output.add(OPCODE + "00");
+            // return break
+            return Status.BREAK;
+        }
+        
+        // Otherwise, get value or variable name
+        String OPERAND = operand.replaceAll(" ", "");
+
+        // If command is a branch
+        if (command.contains("BRANCH")) {
+            // Get branch name
+            String name = OPERAND.substring(1, OPERAND.length());
+
+            // If branch has no identifier name
+            if (name.length() == 0) {
+                // Show error
+                error("branch name is missing " + getFilenameWithLine(i));
+            }
+
+            // Find branch name
+            if (branches.containsKey(name)) {
+                // Get address
+                int addr = branches.get(name);
+                // Add to output
+                output.add(OPCODE + (addr < 10 ? "0" + addr : addr));
+                // Add to operand
+                operands.add(-1);
+                // Proceed to next line
+                return Status.CONTINUE;
+            }
+
+            // Flag if branch declaration is after the branch callee
+            boolean isFound = false;
+            
+            // Loop through the file next to the error
+            for (int j = i + 1, k = 0; j < program.size(); j++, k++) {
+                // Get current line
+                String line = program.get(j);
+                // Get branch name
+                String bname = line.replaceAll(" ", "");
+
+                // If branch name exist after the branch line
+                if (bname.startsWith(BRANCH_IDENTIFIER) && bname.contains(name)) {
+                    // Adjust address
+                    int addr = output.size() + k;
+                    // Add to output
+                    output.add(OPCODE + (addr < 10 ? "0" + addr : addr));
+                    // Add to operand
+                    operands.add(-1);
+                    // Set found to true
+                    isFound = true;
+                    // Break the loop
+                    break;
+                }
+            }
+
+            // If branch declaration not found
+            if (!isFound) {
+                // Show error
+                error("branch name '" + BRANCH_IDENTIFIER + name + "' doesn't exist in " + getFilenameWithLine(i));
+            }
+
+            // Process to next line
+            return Status.CONTINUE;
+        }
+
+        // Loop through the variable
+        for (SmpVariable v : variables) {
+            // If variable name is not null and is same with the current variable
+            if (v.name != null && v.name.equals(OPERAND)) {
+                // Set vName to the address of that variable
+                OPERAND = (v.address < 10 ? "0" + v.address : v.address).toString();
+            }
+        }
+
+        // Variable not found
+        if (operand.equals(OPERAND)) {
+            error("variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
+        }
+
+        // Add opcode to output
+        output.add(OPCODE);
+        // Add operand to operands (to be incremented based on how many lines does the output sml have)
+        operands.add(Integer.parseInt(OPERAND));
+        // Return success
+        return Status.DONE;
+    }
+
+    /**
+     * Process branch 
+     * 
+     * @param i
+     * @param line
+     */
+    private void processBranch(int i, String line) {
+        // Remove all whitespace
+        line = line.replaceAll(" ", "");
+        // Get name
+        String name = line.substring(1, line.length());
+
+        // Check if branch name already exist
+        if (branches.containsKey(name)) {
+            // Show error
+            error("branch '" + BRANCH_IDENTIFIER + name + "' already exist " + getFilenameWithLine(i));
+        }
+
+        // Add branch to branches
+        branches.put(name, output.size());
+    }
+
+    /**
+     * Process variable
+     * 
+     * @param i
+     * @param line
+     */
+    private void processVariable(int i, String line) {
+        // Remove all whitespaces
+        line = line.replaceAll(" ", "");
+
+        // Split line by equal (=) sign
+        String[] tokens = line.split("=");
+        // Get variable name
+        String vName = tokens[0];
+
+        // Check if tokens has only 1 value
+        if (tokens.length == 1) {
+            // Show error
+            error("variable '" + vName + "' doesn't have a value " + getFilenameWithLine(i));
+        }
+
+        // Get variable value
+        String vValue = tokens[1];
+
+        // Check if variable has been declared
+        // Loop through declared variables
+        for (SmpVariable v : variables) {
+            // Check if variable name already exist
+            if (v.name.equals(vName)) {
+                error("variable '" + vName + "' already exist " + getFilenameWithLine(i));
+            }
+        }
+
+        // If not exist, then store it in the variables list
+        variables.add(new SmpVariable(i, vName, vValue));
+    }
+
+    // =========================================================== //
 
     /**
      * Generate low-level simpletron instructions
