@@ -61,8 +61,6 @@ public class SmpCompiler {
     private final String BRANCH_IDENTIFIER = "@";
     // Initialize input file name
     private String inputFilename = "";
-    // Excluded lines count
-    private int excludedCount = 0;
     // Compilation time
     private long compilationTime = 0;
 
@@ -116,15 +114,13 @@ public class SmpCompiler {
         List<String> output = new ArrayList<String>();
 
         // Loop through the program
-        for (int i = 0, initialAddress = 0; i < program.size(); i++) {
+        for (int i = 0; i < program.size(); i++) {
             // Remove trailing and leading whitespace
             String line = program.get(i).trim();
 
             // Check if the line is a comment, or
             // Check if the line is empty
             if (line.startsWith(">") || line.isEmpty()) {
-                // Increment excluded lines if line is a comment or an empty
-                excludedCount++;
                 // Proceed to next line
                 continue;
             }
@@ -142,7 +138,7 @@ public class SmpCompiler {
                 // Check if tokens has only 1 value
                 if (tokens.length == 1) {
                     // Show error
-                    error("variable '" + vName + "' doesn't have a value " + getFilenameWithLine(initialAddress));
+                    error("variable '" + vName + "' doesn't have a value " + getFilenameWithLine(i));
                 }
 
                 // Get variable value
@@ -153,7 +149,7 @@ public class SmpCompiler {
                 for (SmpVariable v : variables) {
                     // Check if variable name already exist
                     if (v.name.equals(vName)) {
-                        error("variable '" + vName + "' already exist " + getFilenameWithLine(initialAddress));
+                        error("variable '" + vName + "' already exist " + getFilenameWithLine(i));
                     }
                 }
 
@@ -173,13 +169,11 @@ public class SmpCompiler {
                 // Check if branch name already exist
                 if (branches.containsKey(name)) {
                     // Show error
-                    error("branch '" + BRANCH_IDENTIFIER + name + "' already exist " + getFilenameWithLine(initialAddress));
+                    error("branch '" + BRANCH_IDENTIFIER + name + "' already exist " + getFilenameWithLine(i));
                 }
 
                 // Add branch to branches
                 branches.put(name, output.size());
-                // Increment initial address
-                initialAddress++;
                 // Proceed to next line
                 continue;
             }
@@ -190,10 +184,10 @@ public class SmpCompiler {
             // Get command (e.g READ, STORE, LOAD, ...)
             String command = tokens[0];
 
-            // If tokens length is only 1
-            if (tokens.length == 1) {
+            // If tokens length is only 1 and is not HALT
+            if (tokens.length == 1 && !command.equals("HALT")) {
                 // Incomplete command
-                error("incomplete command '" + line + "' in " + getFilenameWithLine(initialAddress));
+                error("incomplete command '" + line + "' in " + getFilenameWithLine(i));
             }
 
             // Check if the command exist
@@ -219,15 +213,15 @@ public class SmpCompiler {
                     // If branch has no identifier name
                     if (name.length() == 0) {
                         // Show error
-                        error("branch name is missing " + getFilenameWithLine(initialAddress));
+                        error("branch name is missing " + getFilenameWithLine(i));
                     }
 
                     // Find branch name
                     if (branches.containsKey(name)) {
                         // Get address
-                        int address = branches.get(name);
+                        int addr = branches.get(name);
                         // Add to output
-                        output.add(OPCODE + (address < 10 ? "0" + address : address));
+                        output.add(OPCODE + (addr < 10 ? "0" + addr : addr));
                         // Add to operand
                         operands.add(-1);
                         // Proceed to next line
@@ -247,9 +241,9 @@ public class SmpCompiler {
                         // If branch name exist after the branch line
                         if (bname.startsWith(BRANCH_IDENTIFIER) && bname.contains(name)) {
                             // Adjust address
-                            int address = output.size() + k;
+                            int addr = output.size() + k;
                             // Add to output
-                            output.add(OPCODE + (address < 10 ? "0" + address : address));
+                            output.add(OPCODE + (addr < 10 ? "0" + addr : addr));
                             // Add to operand
                             operands.add(-1);
                             // Set found to true
@@ -262,7 +256,7 @@ public class SmpCompiler {
                     // If branch declaration not found
                     if (!isFound) {
                         // Show error
-                        error("branch name '" + BRANCH_IDENTIFIER + name + "' doesn't exist in " + getFilenameWithLine(initialAddress));
+                        error("branch name '" + BRANCH_IDENTIFIER + name + "' doesn't exist in " + getFilenameWithLine(i));
                     }
 
                     // Proceed to next line
@@ -280,21 +274,19 @@ public class SmpCompiler {
 
                 // Variable not found
                 if (tokens[1].equals(OPERAND)) {
-                    error("variable '" + OPERAND + "' not found in " + getFilenameWithLine(initialAddress));
+                    error("variable '" + OPERAND + "' not found in " + getFilenameWithLine(i));
                 }
 
                 // Add opcode to output
                 output.add(OPCODE);
                 // Add operand to operands (to be incremented based on how many lines does the output sml have)
                 operands.add(Integer.parseInt(OPERAND));
-                // Increment initial address
-                initialAddress++;
                 // Proceed to next line
                 continue;
             }
 
             // Otherwise, throw error
-            error("unknown command '" + command + "' in " + getFilenameWithLine(initialAddress));
+            error("unknown command '" + command + "' in " + getFilenameWithLine(i));
         }
 
         // If last instructions doesn't have a HALT
@@ -321,7 +313,7 @@ public class SmpCompiler {
                         addedVariables.add(v.address);
                     }
 
-                    // // New address
+                    // New address
                     int newAddress = output.size() - 1;
                     // Set new address
                     operands.set(i, newAddress);
@@ -425,7 +417,7 @@ public class SmpCompiler {
      * @return filename with line
      */
     private String getFilenameWithLine(int address) {
-        return "(" + inputFilename + ":" + ((address + 1) + excludedCount) + ")";
+        return "(" + inputFilename + ":" + (address + 1) + ")";
     }
 
     /**
@@ -489,7 +481,6 @@ public class SmpCompiler {
         branches.clear();
         // Reset properties
         inputFilename = "";
-        excludedCount = 0;
         compilationTime = 0;
     }
 
