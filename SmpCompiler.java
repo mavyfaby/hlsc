@@ -114,6 +114,12 @@ public class SmpCompiler {
      * @param program List of high-level instructions
      */
     public void compile() throws Exception {
+        // If the program is empty, return
+        if (isProgramEmpty()) {
+            error("no instructions written (" + inputFilename + ")");
+            return;
+        }
+
         // Set initial compilation time
         compilationTime = System.currentTimeMillis();
 
@@ -489,6 +495,23 @@ public class SmpCompiler {
      */
     private String getFilenameWithLine(int address) {
         return "(" + inputFilename + ":" + (address + 1) + ")";
+    }
+
+    /**
+     * Check if program is empty
+     */
+    private boolean isProgramEmpty() {
+        if (program == null || program.size() == 0) {
+            return true;
+        }
+
+        for (String line : program) {
+            if (line != null && !line.trim().isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
