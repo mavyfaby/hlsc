@@ -36,14 +36,15 @@ class SmpVariable {
  * 
  *  1. Compile high-level simpletron instruction into low-level.
  *  2. Dynamic branching with `@branch_name` anywhere in the program.
- *  3. Declare variables anywhere.
- *  4. Include only used variables to improve memory efficiency.
- *  5. Show error if variable declared but doesn't have a value.
- *  6. Detect whether the variable already exist.
- *  7. Detect whether the variable doesn't exist.
- *  8. Detect whether the command is valid or not.
- *  9. Single line comment with ">"
- * 10. Append HALT instruction at the end of the program if not explicitly added.
+ *  3. Evaluate arithmetic expressions.
+ *  4. Declare variables anywhere.
+ *  5. Include only used variables to improve memory efficiency.
+ *  6. Show error if variable declared but doesn't have a value.
+ *  7. Detect whether the variable already exist.
+ *  8. Detect whether the variable doesn't exist.
+ *  9. Detect whether the command is valid or not.
+ * 10. Single line comment with ">"
+ * 11. Append HALT instruction at the end of the program if not explicitly added.
  * ------------------------------------
  */
 public class SmpCompiler {
@@ -137,6 +138,14 @@ public class SmpCompiler {
 
             // Check if the line is a variable declaration
             if (line.indexOf("=") != -1) {
+                // If it's an arithmetic expression
+                if (line.indexOf("+") != -1 || line.indexOf("-") != -1) {
+                    // Process expression declaration
+                    processExpression(i, line);
+                    // Proceed to next line
+                    continue;
+                }
+
                 // Process variable declaration
                 processVariable(i, line);
                 // Proceed to next line
@@ -204,6 +213,93 @@ public class SmpCompiler {
     }
 
     // ===================== Utility methods ===================== //
+
+    /**
+     * Process expression
+     */
+    private void processExpression(int i, String line) {
+        // Remove all spaces
+        line = line.replaceAll(" ", "");
+
+        // Split by equal sign
+        String[] splits = line.split("=", 2);
+        // Get variable name
+        String varName = splits[0];
+        // Get expression
+        String varExpression = splits[1];
+        // Split expression by plus sign and minus sign
+        String[] expressionSplits = varExpression.split("");
+        // Current variable
+        String currentVar = "";
+
+        // Parsed expression
+        List<String> expression = new ArrayList<String>();
+
+        // Loop through the expression splits
+        for (String ch : expressionSplits) {
+            // Check if the split is a plus or minus sign
+            if (ch.equals("+") || ch.equals("-")) {
+                // Add variable to the list
+                expression.add(currentVar);
+                expression.add(ch);
+                // Reset current variable
+                currentVar = "";
+                // Proceed to next split
+                continue;
+            }
+
+            // Otherwise, add to current variable
+            currentVar += ch;
+        }
+
+        // Add the last variable
+        expression.add(currentVar);
+
+        // Add var name to the list
+        variables.add(new SmpVariable(i, varName, "0"));
+    
+        // Process expression
+        // Start at 2
+        for (int j = 2; j < expression.size(); j++) {
+            // Get expression component
+            String component = expression.get(j);
+
+            // Check if the component is not an operator
+            // Then it's a variable
+            if (!component.equals("+") && !component.equals("-")) {
+                // Get both components
+                String v1 = expression.get(j - 2); // (e.g, 5)
+                String op = expression.get(j - 1); // (e.g, +)
+                String v2 = expression.get(j); // (e.g, 10)
+
+                // Find and get the first variable's address
+                int v1Address = getVariableAddress(v1);
+                int v2Address = getVariableAddress(v2);
+
+                // Check if the variable is not found
+                if (v1Address == -1) {
+                    // Throw error
+                    error("variable '" + v1 + "' not found in " + getFilenameWithLine(i));
+                }
+
+                // Check if the variable is not found
+                if (v2Address == -1) {
+                    // Throw error
+                    error("variable '" + v2 + "' not found in " + getFilenameWithLine(i));
+                }
+
+                // Add opcodes to the output
+                output.add(commands.get("LOAD").toString());
+                output.add(commands.get(op.equals("+") ? "ADD" : "SUBTRACT").toString());
+                output.add(commands.get("STORE").toString());
+
+                // Add operands to operands
+                operands.add(j > 2 ? getVariableAddress(varName) : v1Address);
+                operands.add(v2Address);
+                operands.add(getVariableAddress(varName));
+            }
+        }
+    }
 
     /**
      * Post process variables and operands
@@ -423,6 +519,26 @@ public class SmpCompiler {
     }
 
     // =========================================================== //
+
+    /**
+     * Get variables's address
+     * 
+     * @param varName
+     * @return address
+     */
+    private int getVariableAddress(String varName) {
+        // Loop through the variables
+        for (SmpVariable v : variables) {
+            // If variable name is not null and is same with the current variable
+            if (v.name != null && v.name.equals(varName)) {
+                // Return the address of that variable
+                return v.address;
+            }
+        }
+
+        // Variable not found
+        return -1;
+    }
 
     /**
      * Generate low-level simpletron instructions

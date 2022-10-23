@@ -14,6 +14,7 @@ A high-level simpletron instructions compiler written in Java.
 
 - [x] Compile high-level simpletron into low-level instructions.
 - [x] Dynamic branching with `@branch_name` anywhere in the program.
+- [x] Evaluate arithmetic expressions. 
 - [x] Declare variables anywhere.
 - [x] Include only used variables to improve memory efficiency.
 - [x] Show error if variable declared but doesn't have a value. 
@@ -30,43 +31,30 @@ A high-level simpletron instructions compiler written in Java.
 ## Example
 
 ```smp
-A = 6
-B = 5
-C = 1
-D = 0
+A = 10
+B = 10
+C = 10
 
-@A1
+D = A + B + C
 
-LOAD D
-ADD A
-STORE D
-LOAD B
-SUBTRACT C
-STORE B
-BRANCHZERO @B1
-BRANCH @A1
-
-@B1
 WRITE D
+HALT
 ```
 will be compiled to:
 
 ```sml
-2013
-3010
-2113
-2011
-3112
+2008
+3009
 2111
-4208
-4000
-1113
+2011
+3010
+2111
+1111
 4300
-6
-5
-1
+10
+10
+10
 0
-
 ```
 
 Note: `HALT (43)` is added at the end of the program if not explicitly added in the high-level instructions.
