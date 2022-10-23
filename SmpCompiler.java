@@ -140,10 +140,29 @@ public class SmpCompiler {
             if (line.indexOf("=") != -1) {
                 // If it's an arithmetic expression
                 if (line.indexOf("+") != -1 || line.indexOf("-") != -1) {
-                    // Process expression declaration
-                    processExpression(i, line);
-                    // Proceed to next line
-                    continue;
+                    // Check if it's an arithmetic expression
+                    // Split by operators
+                    String[] split = line.split("=")[1].split("[+-]");
+                    // If expression
+                    boolean isExpression = true;
+
+                    // Loop through the split
+                    for (String s : split) {
+                        // If s is blank
+                        if (s.trim().isEmpty()) {
+                            // Proceed to next line
+                            isExpression = false;
+                            break;
+                        }
+                    }
+
+                    // If it's an expression
+                    if (isExpression) {
+                        // Process expression declaration
+                        processExpression(i, line);
+                        // Proceed to next line
+                        continue;
+                    }
                 }
 
                 // Process variable declaration
