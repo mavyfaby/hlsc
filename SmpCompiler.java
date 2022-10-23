@@ -220,13 +220,43 @@ public class SmpCompiler {
     private void processExpression(int i, String line) {
         // Remove all spaces
         line = line.replaceAll(" ", "");
-
+        
         // Split by equal sign
         String[] splits = line.split("=", 2);
         // Get variable name
         String varName = splits[0];
         // Get expression
         String varExpression = splits[1];
+        // Flase by default
+        boolean isUsed = false;
+
+        // Check if the current expression is used
+        // For every line
+        for (int j = i + 1; j < program.size(); j++) {
+            // Split line by space
+            String[] tokens = program.get(j).split(" ", 2);
+
+            // If the line is not a command, proceed to next line
+            if (tokens.length != 2) {
+                continue;
+            }
+
+            // Get operand
+            String operand = tokens[1].replaceAll(" ", "");
+
+            // If the expression is used
+            if (operand.equals(varName)) {
+                isUsed = true;
+                break;
+            }
+        }
+
+        // If not used, return
+        // To optimize output and avoid unused code 
+        if (!isUsed) {
+            return;
+        }
+
         // Split expression by plus sign and minus sign
         String[] expressionSplits = varExpression.split("");
         // Current variable
