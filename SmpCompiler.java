@@ -762,6 +762,16 @@ public class SmpCompiler {
 
         System.exit(1);
     }
+    
+    /**
+     * Run output with Simpletron Interpreter
+     */
+    public void run() throws Exception {
+        // Initialize sinpletron
+        SmpSimpletron simpletron = new SmpSimpletron(getOutputFilename());
+        // Execute low-level simpletron code
+        simpletron.execute();
+    }
 
     /**
      * Main program
@@ -776,6 +786,14 @@ public class SmpCompiler {
             // which is assuming an input high-level simpletron instructions
             SmpCompiler compiler = new SmpCompiler(args[0]);
             compiler.compile();
+
+            // Run only if args length is 1 (only filename)
+            // OR
+            // If has 2nd argument and it's not a dash
+            if (!(args.length > 1 && args[1].equals("-"))) {
+                compiler.run();
+            }
+
             return;
         }
 
