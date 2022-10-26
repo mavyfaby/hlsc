@@ -30,10 +30,8 @@ class SmpVariable {
  * High-level Simpletron Instructions Compiler
  * 
  * @author Maverick G. Fabroa
- * @date October 11, 2022
- * 
+ * Date: October 11, 2022
  * ------------ Features: -------------
- * 
  *  1. Compile high-level simpletron instruction into low-level.
  *  2. Dynamic branching with `@branch_name` anywhere in the program.
  *  3. Evaluate arithmetic expressions.
@@ -75,9 +73,9 @@ public class SmpCompiler {
 
     /**
      * Initialize compiler with file name
-     * 
-     * @param filename
-     * @throws FileNotFoundException
+     *
+     * @param filename Input filename
+     * @throws FileNotFoundException If file doesn't exist
      */
     public SmpCompiler(String filename) throws FileNotFoundException {
         // Get the file
@@ -113,7 +111,7 @@ public class SmpCompiler {
             }
         }
 
-        // Set input file namme
+        // Set input filename
         inputFilename = filename;
         // Close the scanner
         sc.close();
@@ -121,8 +119,6 @@ public class SmpCompiler {
 
     /**
      * Compiles the program
-     * 
-     * @param program List of high-level instructions
      */
     public void compile() throws Exception {
         // If the program is empty, return
@@ -147,9 +143,9 @@ public class SmpCompiler {
             }
 
             // Check if the line is a variable declaration
-            if (line.indexOf("=") != -1) {
+            if (line.contains("=")) {
                 // If it's an arithmetic expression
-                if (line.indexOf("+") != -1 || line.indexOf("-") != -1) {
+                if (line.contains("+") || line.contains("-")) {
                     // Check if it's an arithmetic expression
                     // Split by operators
                     String[] split = line.split("=")[1].split("[+-]");
@@ -256,7 +252,7 @@ public class SmpCompiler {
         String varName = splits[0];
         // Get expression
         String varExpression = splits[1];
-        // Flase by default
+        // False by default
         boolean isUsed = false;
 
         // Check if the current expression is used
@@ -367,7 +363,7 @@ public class SmpCompiler {
         // Added variables in the output
         List<Integer> addedVariables = new ArrayList<Integer>();
 
-        // For every variables in the program
+        // For every variable in the program
         for (SmpVariable v : variables) {
             // Loop every operands
             for (int i = 0; i < operands.size(); i++) {
@@ -409,8 +405,8 @@ public class SmpCompiler {
     /**
      * Process command 
      * 
-     * @param i
-     * @param commandTokens
+     * @param i line index
+     * @param commandTokens line chunks
      * @return Status
      */
     private Status processCommand(int i, String[] commandTokens) {
@@ -441,18 +437,18 @@ public class SmpCompiler {
         // If command is a branch
         if (command.contains("BRANCH")) {
             // Get branch name
-            String name = OPERAND.substring(1, OPERAND.length());
+            String branchName = OPERAND.substring(1, OPERAND.length());
 
             // If branch has no identifier name
-            if (name.length() == 0) {
+            if (branchName.length() == 0) {
                 // Show error
                 error("branch name is missing " + getFilenameWithLine(i));
             }
 
             // Find branch name
-            if (branches.containsKey(name)) {
+            if (branches.containsKey(branchName)) {
                 // Get address
-                int addr = branches.get(name);
+                int addr = branches.get(branchName);
                 // Add to output
                 output.add(OPCODE + (addr < 10 ? "0" + addr : addr));
                 // Add to operand
@@ -469,10 +465,10 @@ public class SmpCompiler {
                 // Get current line
                 String line = program.get(j);
                 // Get branch name
-                String bname = line.replaceAll(" ", "");
+                String name = line.replaceAll(" ", "");
 
                 // If branch name exist after the branch line
-                if (bname.startsWith(BRANCH_IDENTIFIER) && bname.contains(name)) {
+                if (name.startsWith(BRANCH_IDENTIFIER) && name.contains(branchName)) {
                     // Adjust address
                     int addr = output.size() + k;
                     // Add to output
@@ -489,7 +485,7 @@ public class SmpCompiler {
             // If branch declaration not found
             if (!isFound) {
                 // Show error
-                error("branch name '" + BRANCH_IDENTIFIER + name + "' doesn't exist in " + getFilenameWithLine(i));
+                error("branch name '" + BRANCH_IDENTIFIER + branchName + "' doesn't exist in " + getFilenameWithLine(i));
             }
 
             // Process to next line
@@ -521,8 +517,8 @@ public class SmpCompiler {
     /**
      * Process branch 
      * 
-     * @param i
-     * @param line
+     * @param i line index
+     * @param line current line
      */
     private void processBranch(int i, String line) {
         // Remove all whitespace
@@ -543,8 +539,8 @@ public class SmpCompiler {
     /**
      * Process variable
      * 
-     * @param i
-     * @param line
+     * @param i line index
+     * @param line current line
      */
     private void processVariable(int i, String line) {
         // Remove all whitespaces
@@ -580,9 +576,9 @@ public class SmpCompiler {
     // =========================================================== //
 
     /**
-     * Get variables's address
+     * Get variable's address
      * 
-     * @param varName
+     * @param varName variable name
      * @return address
      */
     private int getVariableAddress(String varName) {
@@ -602,9 +598,9 @@ public class SmpCompiler {
     /**
      * Generate low-level simpletron instructions
      * 
-     * @param program
+     * @param program List of instructions
      * @return boolean
-     * @throws Exception
+     * @throws Exception If errors occurred when closing the file
      */
     private boolean generateOutput(List<String> program) throws Exception {
         // Initialize file output name
@@ -618,11 +614,11 @@ public class SmpCompiler {
             FileWriter io = new FileWriter(file);
             // For every line in program
             for (String line : program) {
-                // Write the ouput to the file
+                // Write the output to the file
                 io.write(line + "\n");
             }
 
-            // Close filewriter
+            // Close file writer
             io.close();
             // Return success
             return true;
@@ -655,8 +651,8 @@ public class SmpCompiler {
     /**
      * Check whether the input file name have .smp extension
      * 
-     * @param filename
-     * @return
+     * @param filename Input file name
+     * @return boolean
      */
     private boolean isSmpFile(String filename) {
         return filename != null && filename.trim().endsWith("." + INPUT_FILE_EXT);
@@ -665,18 +661,18 @@ public class SmpCompiler {
     /**
      * Get filename with line number based on the program execution index
      * 
-     * @param address
+     * @param index line index
      * @return filename with line
      */
-    private String getFilenameWithLine(int address) {
-        return "(" + inputFilename + ":" + (address + 1) + ")";
+    private String getFilenameWithLine(int index) {
+        return "(" + inputFilename + ":" + (index + 1) + ")";
     }
 
     /**
      * Check if program is empty
      */
     private boolean isProgramEmpty() {
-        if (program == null || program.size() == 0) {
+        if (program.size() == 0) {
             return true;
         }
 
@@ -691,9 +687,9 @@ public class SmpCompiler {
 
     /**
      * Print compilation output statistics
-     * 
-     * @param output
-     * @param showOutput
+     *
+     * @param output List of instructions
+     * @param showOutput Whether to show output when compiling
      */
     private void printOutputStats(List<String> output, boolean showOutput) {
         // Get file size
@@ -777,7 +773,7 @@ public class SmpCompiler {
      * Run output with Simpletron Interpreter
      */
     public void run() throws Exception {
-        // Initialize sinpletron
+        // Initialize simpleton
         SmpSimpletron simpletron = new SmpSimpletron(getOutputFilename());
         // Execute low-level simpletron code
         simpletron.execute();
@@ -787,19 +783,17 @@ public class SmpCompiler {
      * Main program
      * 
      * @param args Name of the input
-     * @throws Exception
+     * @throws Exception If an error occurred
      */
     public static void main(String[] args) throws Exception {
         // Check if args have values
         if (args.length > 0) {
-            // Intantiate the high-level simpletron compiler with the first value
+            // Instantiate the high-level simpletron compiler with the first value
             // which is assuming an input high-level simpletron instructions
             SmpCompiler compiler = new SmpCompiler(args[0]);
             compiler.compile();
 
-            // Run only if args length is 1 (only filename)
-            // OR
-            // If has 2nd argument and it's not a dash
+            // Run simpletron if no "-" after input filename when running
             if (!(args.length > 1 && args[1].equals("-"))) {
                 compiler.run();
             }
