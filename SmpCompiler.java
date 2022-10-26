@@ -70,6 +70,8 @@ public class SmpCompiler {
     private String inputFilename = "";
     // Compilation time
     private long compilationTime = 0;
+    // Flag if the input program has a halt instruction
+    private boolean hasHalt = false;
 
     /**
      * Initialize compiler with file name
@@ -99,8 +101,16 @@ public class SmpCompiler {
 
         // Read the file line by line
         while (sc.hasNextLine()) {
-            // Get line, trim, and add to program
-            program.add(sc.nextLine().trim());
+            // Get the line, and trim
+            String line = sc.nextLine().trim();
+            // add to program
+            program.add(line);
+
+            // If the line is not empty, increment
+            if (line.equals("HALT")) {
+                // Set the flag to true
+                hasHalt = true;
+            }
         }
 
         // Set input file namme
@@ -211,9 +221,9 @@ public class SmpCompiler {
             error("unknown command '" + commandTokens[0] + "' in " + getFilenameWithLine(i));
         }
 
-        // If last instructions doesn't have a HALT
+        // If the instruction doesn't have a halt instruction
         // Automatically add a HALT instruction
-        if (program.get(program.size() - 1).indexOf("HALT") == -1) {
+        if (!hasHalt) {
             // Add a HALT
             output.add(commands.get("HALT") + "00");
         }
