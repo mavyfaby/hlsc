@@ -192,8 +192,14 @@ public class SmpCompiler {
             // Get command (e.g READ, STORE, LOAD, ...)
             // If tokens length is only 1 and is not HALT
             if (commandTokens.length == 1 && !commandTokens[0].equals("HALT")) {
-                // Incomplete command
-                error("incomplete command '" + line + "' in " + getFilenameWithLine(i));
+                // Check if command is exist
+                if (commands.containsKey(commandTokens[0])) {
+                    // Incomplete command
+                    error("incomplete command '" + line + "' in " + getFilenameWithLine(i));
+                }
+
+                // Otherwise, throw error
+                error("unknown command '" + commandTokens[0] + "' in " + getFilenameWithLine(i));
             }
 
             // Check if the command exist
